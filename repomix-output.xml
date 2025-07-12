@@ -1,0 +1,1620 @@
+This file is a merged representation of a subset of the codebase, containing files not matching ignore patterns, combined into a single document by Repomix.
+The content has been processed where content has been compressed (code blocks are separated by ⋮---- delimiter).
+
+<file_summary>
+This section contains a summary of this file.
+
+<purpose>
+This file contains a packed representation of the entire repository's contents.
+It is designed to be easily consumable by AI systems for analysis, code review,
+or other automated processes.
+</purpose>
+
+<file_format>
+The content is organized as follows:
+1. This summary section
+2. Repository information
+3. Directory structure
+4. Repository files (if enabled)
+4. Repository files, each consisting of:
+  - File path as an attribute
+  - Full contents of the file
+</file_format>
+
+<usage_guidelines>
+- This file should be treated as read-only. Any changes should be made to the
+  original repository files, not this packed version.
+- When processing this file, use the file path to distinguish
+  between different files in the repository.
+- Be aware that this file may contain sensitive information. Handle it with
+  the same level of security as you would the original repository.
+</usage_guidelines>
+
+<notes>
+- Some files may have been excluded based on .gitignore rules and Repomix's configuration
+- Binary files are not included in this packed representation. Please refer to the Repository Structure section for a complete list of file paths, including binary files
+- Files matching these patterns are excluded: **/*.min.js, **/*.min.css, **/*.svg, src/scripts/libs/**, vendor/**, **/*.lock, **/__pycache__/**
+- Files matching patterns in .gitignore are excluded
+- Files matching default ignore patterns are excluded
+- Content has been compressed - code blocks are separated by ⋮---- delimiter
+- Files are sorted by Git change count (files with more changes are at the bottom)
+</notes>
+
+<additional_info>
+
+</additional_info>
+
+</file_summary>
+
+<directory_structure>
+database/
+  __init__.py
+  connections.py
+  models.py
+  schema_analyzer.py
+query_engine/
+  __init__.py
+  nl_processor.py
+  query_validator.py
+ui/
+  __init__.py
+  components.py
+utils/
+  __init__.py
+  helpers.py
+.gitignore
+app.py
+config.py
+generate_key.py
+main.py
+requirements.txt
+test_imports.py
+test_nl_processor.py
+test_phase_2_1.py
+test_phase_2_2.py
+</directory_structure>
+
+<files>
+This section contains the contents of the repository's files.
+
+<file path="database/__init__.py">
+__all__ = [
+</file>
+
+<file path="database/connections.py">
+class DatabaseManager
+⋮----
+def __init__(self)
+⋮----
+def _get_cipher(self) -> Optional[Fernet]
+⋮----
+"""Initialize encryption for connection strings"""
+⋮----
+# The key from .env is already properly formatted for Fernet
+# Don't double-encode it
+⋮----
+def add_connection(self, config: ConnectionConfig) -> bool
+⋮----
+"""Add a new database connection"""
+⋮----
+# Encrypt connection string if cipher is available
+connection_string = config.connection_string
+⋮----
+connection_string = self.cipher.encrypt(connection_string.encode()).decode()
+⋮----
+engine = create_engine(
+⋮----
+# Test connection
+⋮----
+def remove_connection(self, name: str) -> bool
+⋮----
+"""Remove a database connection"""
+⋮----
+def set_active_connection(self, name: str) -> bool
+⋮----
+"""Set the active database connection"""
+⋮----
+def get_active_engine(self) -> Optional[sa.Engine]
+⋮----
+"""Get the currently active database engine"""
+⋮----
+def list_connections(self) -> List[str]
+⋮----
+"""List all available connection names"""
+⋮----
+def test_connection(self, connection_string: str) -> tuple[bool, str]
+⋮----
+"""Test a database connection string"""
+⋮----
+engine = create_engine(connection_string)
+⋮----
+result = conn.execute(text("SELECT 1"))
+⋮----
+def execute_query(self, query: str, params: Optional[Dict] = None) -> pd.DataFrame
+⋮----
+"""Execute a query and return results as DataFrame"""
+engine = self.get_active_engine()
+⋮----
+# Set query timeout
+⋮----
+result = pd.read_sql(
+⋮----
+# Limit result size
+⋮----
+result = result.head(MAX_RESULT_ROWS)
+⋮----
+def get_database_type(self) -> Optional[DatabaseType]
+⋮----
+"""Get the type of the active database"""
+⋮----
+dialect_name = engine.dialect.name.lower()
+⋮----
+def create_sample_sqlite_db(self, file_path: str = "sample_data/sample.db") -> bool
+⋮----
+"""Create a sample SQLite database for testing"""
+⋮----
+conn = sqlite3.connect(file_path)
+cursor = conn.cursor()
+⋮----
+# Create sample tables
+⋮----
+# Insert sample data
+customers_data = [
+⋮----
+orders_data = [
+⋮----
+products_data = [
+</file>
+
+<file path="database/models.py">
+class DatabaseType(Enum)
+⋮----
+SQLITE = "sqlite"
+MYSQL = "mysql"
+POSTGRESQL = "postgresql"
+⋮----
+@dataclass
+class ColumnInfo
+⋮----
+name: str
+data_type: str
+is_nullable: bool
+is_primary_key: bool
+is_foreign_key: bool
+foreign_key_table: Optional[str] = None
+foreign_key_column: Optional[str] = None
+default_value: Optional[Any] = None
+max_length: Optional[int] = None
+description: Optional[str] = None
+⋮----
+@dataclass
+class TableInfo
+⋮----
+columns: List[ColumnInfo]
+row_count: Optional[int] = None
+⋮----
+def get_column(self, name: str) -> Optional[ColumnInfo]
+⋮----
+def get_primary_keys(self) -> List[ColumnInfo]
+⋮----
+def get_foreign_keys(self) -> List[ColumnInfo]
+⋮----
+@dataclass
+class DatabaseSchema
+⋮----
+database_name: str
+database_type: DatabaseType
+tables: List[TableInfo]
+connection_string: str
+⋮----
+def get_table(self, name: str) -> Optional[TableInfo]
+⋮----
+def get_table_names(self) -> List[str]
+⋮----
+def to_context_string(self, max_tables: int = 20) -> str
+⋮----
+"""Convert schema to string format for LLM context"""
+context_parts = [f"Database: {self.database_name} ({self.database_type.value})"]
+⋮----
+tables_to_include = self.tables[:max_tables]
+⋮----
+col_info = f"  - {col.name}: {col.data_type}"
+⋮----
+@dataclass
+class ConnectionConfig
+⋮----
+db_type: str
+⋮----
+is_active: bool = True
+</file>
+
+<file path="database/schema_analyzer.py">
+class SchemaAnalyzer
+⋮----
+def __init__(self, engine)
+⋮----
+def analyze_database(self, database_name: str = None) -> DatabaseSchema
+⋮----
+"""Enhanced database schema analysis with relationships and statistics"""
+⋮----
+# Get database type
+db_type = self._get_database_type()
+⋮----
+# Get database name
+⋮----
+database_name = self._get_database_name()
+⋮----
+# Get all tables with enhanced analysis
+table_names = self.inspector.get_table_names()
+tables = []
+⋮----
+# Build relationship map first
+⋮----
+table_info = self._analyze_table_enhanced(table_name)
+⋮----
+# Sort tables by importance (tables with more relationships first)
+⋮----
+def _get_database_type(self) -> DatabaseType
+⋮----
+"""Determine database type from engine"""
+dialect_name = self.engine.dialect.name.lower()
+⋮----
+# Default to SQLite for unknown types
+⋮----
+def _get_database_name(self) -> str
+⋮----
+"""Extract database name from connection"""
+⋮----
+# For SQLite, use the filename
+⋮----
+db_path = str(self.engine.url.database)
+⋮----
+# For other databases, use the database name from URL
+⋮----
+def _build_relationship_map(self, table_names: List[str])
+⋮----
+"""Build a comprehensive map of table relationships"""
+relationships = defaultdict(list)
+⋮----
+# Get foreign keys
+fk_constraints = self.inspector.get_foreign_keys(table_name)
+⋮----
+source_table = table_name
+target_table = fk['referred_table']
+⋮----
+# Store bidirectional relationships
+⋮----
+def _analyze_table_enhanced(self, table_name: str) -> TableInfo
+⋮----
+"""Enhanced table analysis with statistics and relationships"""
+⋮----
+# Get basic column information
+columns_info = self.inspector.get_columns(table_name)
+⋮----
+# Get constraints
+pk_constraint = self.inspector.get_pk_constraint(table_name)
+primary_keys = pk_constraint.get('constrained_columns', [])
+⋮----
+foreign_keys = {}
+⋮----
+# Get unique constraints
+⋮----
+unique_constraints = self.inspector.get_unique_constraints(table_name)
+unique_columns = set()
+⋮----
+# Build enhanced column information
+columns = []
+⋮----
+col_name = col_info['name']
+⋮----
+# Get column statistics
+col_stats = self._get_column_statistics(table_name, col_name)
+⋮----
+column = ColumnInfo(
+⋮----
+# Add unique constraint info
+⋮----
+# Get enhanced table statistics
+row_count = self._get_table_row_count(table_name)
+⋮----
+# Generate table description
+table_description = self._generate_table_description(table_name, columns, row_count)
+⋮----
+def _normalize_data_type(self, data_type: str) -> str
+⋮----
+"""Normalize database-specific data types to common types"""
+data_type = data_type.upper()
+⋮----
+# Common mappings
+type_mappings = {
+⋮----
+# Extract base type (remove size specifications)
+base_type = re.sub(r'\([^)]*\)', '', data_type).strip()
+⋮----
+def _extract_max_length(self, data_type: str) -> Optional[int]
+⋮----
+"""Extract maximum length from data type specification"""
+match = re.search(r'\((\d+)\)', data_type)
+⋮----
+def _get_column_statistics(self, table_name: str, column_name: str) -> Dict[str, Any]
+⋮----
+"""Get basic statistics for a column"""
+⋮----
+# Get distinct count and null count
+query = f"""
+result = conn.execute(text(query)).fetchone()
+⋮----
+def _generate_column_description(self, column_name: str, stats: Dict[str, Any]) -> str
+⋮----
+"""Generate intelligent description for a column"""
+descriptions = []
+⋮----
+# Infer purpose from column name
+name_lower = column_name.lower()
+⋮----
+# Add statistics info
+⋮----
+total = stats.get('total_count', 0)
+distinct = stats.get('distinct_count', 0)
+⋮----
+uniqueness = distinct / total
+⋮----
+def _generate_table_description(self, table_name: str, columns: List[ColumnInfo], row_count: int) -> str
+⋮----
+"""Generate intelligent description for a table"""
+⋮----
+# Infer purpose from table name
+name_lower = table_name.lower()
+⋮----
+# Add structural info
+fk_count = len([c for c in columns if c.is_foreign_key])
+⋮----
+def _get_table_row_count(self, table_name: str) -> Optional[int]
+⋮----
+"""Get approximate row count for a table"""
+⋮----
+result = conn.execute(text(f"SELECT COUNT(*) FROM {table_name}"))
+⋮----
+def get_table_relationships(self, table_name: str) -> List[Dict]
+⋮----
+"""Get all relationships for a specific table"""
+⋮----
+def get_related_tables(self, table_name: str) -> List[str]
+⋮----
+"""Get list of tables related to the given table"""
+relationships = self._table_relationships.get(table_name, [])
+related_tables = set()
+⋮----
+def get_sample_data(self, table_name: str, limit: int = 5) -> pd.DataFrame
+⋮----
+"""Get sample data from a table"""
+⋮----
+query = f"SELECT * FROM {table_name} LIMIT {limit}"
+⋮----
+def search_tables(self, search_term: str) -> List[str]
+⋮----
+"""Search for tables by name"""
+⋮----
+search_term = search_term.lower()
+⋮----
+def search_columns(self, search_term: str) -> Dict[str, List[str]]
+⋮----
+"""Search for columns across all tables"""
+results = {}
+⋮----
+columns = self.inspector.get_columns(table_name)
+matching_columns = [
+⋮----
+def suggest_joins(self, tables: List[str]) -> List[Dict[str, str]]
+⋮----
+"""Suggest possible JOIN operations between tables"""
+joins = []
+⋮----
+# Check if table1 has FK to table2
+relationships = self._table_relationships.get(table1, [])
+⋮----
+# Check if table2 has FK to table1
+relationships = self._table_relationships.get(table2, [])
+⋮----
+def get_schema_context_optimized(self, max_tokens: int = 3000) -> str
+⋮----
+"""Get optimized schema context for LLM with token limit consideration"""
+⋮----
+schema = self.analyze_database()
+⋮----
+# Start with basic info
+context_parts = [
+⋮----
+# Estimate tokens (rough: 1 token ≈ 4 characters)
+current_length = len("\n".join(context_parts))
+target_length = max_tokens * 4  # Convert tokens to characters
+⋮----
+# Sort tables by importance
+important_tables = sorted(schema.tables,
+⋮----
+(t.row_count or 0) / 1000  # Favor tables with more data
+⋮----
+# Add tables until we hit token limit
+⋮----
+table_context = f"\n\nTable: {table.name}"
+⋮----
+# Add essential columns first (PK, FK, then others)
+essential_columns = [c for c in table.columns if c.is_primary_key or c.is_foreign_key]
+other_columns = [c for c in table.columns if not c.is_primary_key and not c.is_foreign_key]
+⋮----
+col_info = f"\n  - {col.name}: {col.data_type}"
+⋮----
+# Check if adding this would exceed limit
+⋮----
+# Add other columns if space permits
+for col in other_columns[:5]:  # Limit to 5 additional columns per table
+⋮----
+# Add row count if available
+⋮----
+# Add relationship information if space permits
+if current_length < target_length * 0.8:  # Use 80% of available space
+relationships = []
+for table in important_tables[:5]:  # Top 5 tables only
+related = self.get_related_tables(table.name)
+⋮----
+rel_context = f"\n\nKey Relationships:\n" + "\n".join(relationships)
+⋮----
+def search_schema(self, search_term: str) -> Dict[str, Any]
+⋮----
+"""Advanced schema search functionality"""
+⋮----
+results = {
+⋮----
+# Search tables
+⋮----
+# Search columns
+⋮----
+# Search relationships
+⋮----
+# Generate suggestions
+⋮----
+# Fuzzy matching suggestions
+all_terms = []
+⋮----
+# Simple fuzzy matching
+suggestions = [term for term in all_terms if search_term in term.lower()]
+⋮----
+def get_join_suggestions_for_query(self, mentioned_tables: List[str]) -> List[str]
+⋮----
+"""Get JOIN suggestions for a natural language query"""
+⋮----
+join_suggestions = []
+joins = self.suggest_joins(mentioned_tables)
+⋮----
+suggestion = f"{join['type']} {join['table2']} ON {join['condition']}"
+⋮----
+# Start with basic info
+⋮----
+# Estimate tokens (rough: 1 token ≈ 4 characters)
+⋮----
+target_length = max_tokens * 4  # Convert tokens to characters
+⋮----
+# Sort tables by importance
+⋮----
+len(t.get_foreign_keys()) * 3 +  # Tables with FKs are more important
+len(t.get_primary_keys()) * 2 +   # Tables with PKs are important
+(t.row_count or 0) / 1000         # Favor tables with more data
+⋮----
+# Add tables until we hit token limit
+⋮----
+# Add essential columns first (PK, FK, then others)
+⋮----
+flags = []
+⋮----
+# Check if adding this would exceed limit
+⋮----
+# Add other columns if space permits
+for col in other_columns[:5]:  # Limit to 5 additional columns per table
+⋮----
+# Add row count if available
+⋮----
+# Check if we can fit this table
+⋮----
+# Add relationship information if space permits
+if current_length < target_length * 0.8:  # Use 80% of available space
+⋮----
+for table in important_tables[:5]:  # Top 5 tables only
+⋮----
+# Search tables
+⋮----
+# Search columns
+⋮----
+# Search relationships
+⋮----
+related_tables = self.get_related_tables(table_name)
+⋮----
+# Generate suggestions
+⋮----
+# Fuzzy matching suggestions
+⋮----
+# Simple fuzzy matching
+</file>
+
+<file path="query_engine/__init__.py">
+__all__ = ['NLProcessor', 'QueryValidator', 'QueryType', 'QueryIntent', 'QueryResult']
+</file>
+
+<file path="query_engine/nl_processor.py">
+# query_engine/nl_processor.py
+⋮----
+class QueryType(Enum)
+⋮----
+SELECT = "select"
+INSERT = "insert"
+UPDATE = "update"
+DELETE = "delete"
+CREATE = "create"
+DROP = "drop"
+UNKNOWN = "unknown"
+⋮----
+@dataclass
+class QueryIntent
+⋮----
+query_type: QueryType
+confidence: float
+tables_mentioned: List[str]
+columns_mentioned: List[str]
+requires_joins: bool
+complexity_score: int
+⋮----
+@dataclass
+class QueryResult
+⋮----
+sql_query: str
+intent: QueryIntent
+explanation: str
+warnings: List[str]
+is_safe: bool
+⋮----
+class NLProcessor
+⋮----
+def __init__(self, schema: DatabaseSchema, schema_analyzer=None)
+⋮----
+self.schema_analyzer = schema_analyzer  # Optional for advanced features
+⋮----
+# Configure Gemini
+⋮----
+def process_query(self, natural_query: str) -> QueryResult
+⋮----
+"""Main entry point - like a smart WordPress AJAX handler"""
+⋮----
+# Step 1: Analyze intent (like parsing $_POST data)
+intent = self._analyze_intent(natural_query)
+⋮----
+# Step 2: Generate SQL (like building database query)
+sql_query = self._generate_sql(natural_query, intent)
+⋮----
+# Step 3: Validate and add safety checks (like wp_verify_nonce)
+is_safe = self._validate_query_safety(sql_query)
+warnings = self._generate_warnings(sql_query, intent)
+⋮----
+# Step 4: Generate explanation (like admin notices)
+explanation = self._explain_query(sql_query, natural_query)
+⋮----
+def _analyze_intent(self, query: str) -> QueryIntent
+⋮----
+"""Analyze what the user wants to do - like parsing form data"""
+⋮----
+# Simple keyword-based classification first
+query_lower = query.lower()
+⋮----
+# Detect query type (like checking $_POST['action'])
+⋮----
+query_type = QueryType.SELECT
+⋮----
+query_type = QueryType.INSERT
+⋮----
+query_type = QueryType.UPDATE
+⋮----
+query_type = QueryType.DELETE
+⋮----
+query_type = QueryType.UNKNOWN
+⋮----
+# Find mentioned tables (like finding post types in query)
+tables_mentioned = []
+⋮----
+# Detect if joins are needed (like checking for related post data)
+requires_joins = len(tables_mentioned) > 1 or any(word in query_lower for word in ['join', 'with', 'and', 'related'])
+⋮----
+# Calculate complexity (like checking query performance)
+complexity_score = self._calculate_complexity(query, tables_mentioned, requires_joins)
+⋮----
+confidence=0.8,  # We'll make this smarter later
+⋮----
+columns_mentioned=[],  # TODO: Implement column detection
+⋮----
+def _generate_sql(self, natural_query: str, intent: QueryIntent) -> str
+⋮----
+"""Generate SQL using Gemini - like building WP_Query"""
+⋮----
+# Build context-aware prompt
+prompt = self._build_generation_prompt(natural_query, intent)
+⋮----
+# Generate with Gemini (like calling wp_remote_get)
+response = self.model.generate_content(prompt)
+⋮----
+sql_query = response.text.strip()
+⋮----
+# Clean up the response (like sanitizing form input)
+sql_query = re.sub(r'```sql\n?', '', sql_query)
+sql_query = re.sub(r'```\n?', '', sql_query)
+sql_query = sql_query.strip()
+⋮----
+def _build_generation_prompt(self, natural_query: str, intent: QueryIntent) -> str
+⋮----
+"""Build context-rich prompt - like preparing template data"""
+⋮----
+# Get relevant schema context
+schema_context = self._get_relevant_schema_context(intent.tables_mentioned)
+⋮----
+# Build the prompt (like building template variables)
+prompt = f"""You are an expert SQL query generator.
+⋮----
+def _get_relevant_schema_context(self, mentioned_tables: List[str]) -> str
+⋮----
+"""Get schema context for mentioned tables - like getting post meta"""
+⋮----
+# Return a summary of all tables (like get_post_types())
+⋮----
+# Build context for specific tables (like get_post_meta for specific posts)
+context_parts = []
+⋮----
+table = self.schema.get_table(table_name)
+⋮----
+flags = []
+⋮----
+flag_str = f" ({', '.join(flags)})" if flags else ""
+⋮----
+def _validate_query_safety(self, sql_query: str) -> bool
+⋮----
+"""Validate query safety - like current_user_can() checks"""
+⋮----
+def _generate_warnings(self, sql_query: str, intent: QueryIntent) -> List[str]
+⋮----
+"""Generate warnings - like admin_notices"""
+warnings = []
+⋮----
+def _explain_query(self, sql_query: str, natural_query: str) -> str
+⋮----
+"""Generate query explanation - like contextual help text"""
+⋮----
+explanation_prompt = f"""Explain this SQL query in simple terms:
+⋮----
+response = self.model.generate_content(explanation_prompt)
+⋮----
+def _calculate_complexity(self, query: str, tables: List[str], requires_joins: bool) -> int
+⋮----
+"""Calculate query complexity score (1-10) - like post query performance"""
+score = 1
+⋮----
+# Base complexity
+⋮----
+# Join complexity
+⋮----
+# Aggregation complexity
+⋮----
+# Subquery complexity
+⋮----
+"""Enhanced intent analysis with smarter table and column detection"""
+⋮----
+# Detect query type (existing logic)
+⋮----
+# Enhanced table detection with schema search
+⋮----
+# Direct table name matching
+⋮----
+# Fuzzy matching for partial names
+⋮----
+search_results = self._search_schema_for_query(query_lower)
+⋮----
+# Enhanced column detection
+columns_mentioned = self._detect_mentioned_columns(query_lower, tables_mentioned)
+⋮----
+# Smart JOIN detection
+requires_joins = self._analyze_join_requirements(query_lower, tables_mentioned)
+⋮----
+# Enhanced complexity calculation
+complexity_score = self._calculate_enhanced_complexity(query, tables_mentioned, columns_mentioned, requires_joins)
+⋮----
+def _search_schema_for_query(self, query_lower: str) -> Dict[str, List[str]]
+⋮----
+"""Search schema for relevant tables based on query content"""
+⋮----
+results = {
+⋮----
+# Business logic keywords to table mapping
+business_keywords = {
+⋮----
+# Check for business context
+⋮----
+# Remove duplicates
+⋮----
+def _detect_mentioned_columns(self, query_lower: str, tables_mentioned: List[str]) -> List[str]
+⋮----
+"""Detect column names mentioned in natural language query"""
+⋮----
+columns_mentioned = []
+⋮----
+# Common column name patterns
+column_keywords = {
+⋮----
+# Search for column keywords in query
+⋮----
+# Check if these columns exist in mentioned tables
+⋮----
+def _analyze_join_requirements(self, query_lower: str, tables_mentioned: List[str]) -> bool
+⋮----
+"""Analyze if the query requires JOINs"""
+⋮----
+# Explicit JOIN keywords
+⋮----
+# Multiple tables mentioned
+⋮----
+# Relationship keywords
+relationship_words = ['customer orders', 'order items', 'product sales', 'user purchases']
+⋮----
+def _calculate_enhanced_complexity(self, query: str, tables: List[str], columns: List[str], requires_joins: bool) -> int
+⋮----
+"""Enhanced complexity calculation"""
+⋮----
+# JOIN complexity
+⋮----
+agg_words = ['sum', 'count', 'avg', 'max', 'min', 'total', 'average', 'top', 'bottom']
+agg_count = sum(1 for word in agg_words if word in query_lower)
+⋮----
+# Grouping complexity
+⋮----
+# Sorting complexity
+⋮----
+# Date/time complexity
+⋮----
+def _calculate_confidence(self, query_lower: str, tables: List[str], columns: List[str]) -> float
+⋮----
+"""Calculate confidence score for intent analysis"""
+⋮----
+confidence = 0.5  # Base confidence
+⋮----
+# Boost confidence for clear table matches
+⋮----
+# Boost confidence for column matches
+⋮----
+# Boost confidence for clear SQL keywords
+sql_keywords = ['select', 'show', 'get', 'find', 'list']
+⋮----
+"""Enhanced prompt building with smart context"""
+⋮----
+# Get optimized schema context based on mentioned tables
+⋮----
+schema_context = self._get_focused_schema_context(intent.tables_mentioned)
+⋮----
+schema_context = self._get_general_schema_context()
+⋮----
+# Get JOIN suggestions if needed
+join_suggestions = []
+⋮----
+# This would use the schema analyzer's suggest_joins method
+joins = self.schema_analyzer.suggest_joins(intent.tables_mentioned) if hasattr(self, 'schema_analyzer') else []
+join_suggestions = [f"Consider: {j['type']} {j['table2']} ON {j['condition']}" for j in joins[:2]]
+⋮----
+# Build enhanced prompt
+prompt = f"""You are an expert SQL query generator with deep database knowledge.
+⋮----
+def _get_focused_schema_context(self, mentioned_tables: List[str]) -> str
+⋮----
+"""Get detailed context for specific tables mentioned in query"""
+⋮----
+# Add table description if available
+⋮----
+# Add all columns with detailed info
+⋮----
+# Add row count if available
+⋮----
+# Add related tables that might be useful
+related_tables = []
+⋮----
+# Get tables related to this one
+⋮----
+related = self.schema_analyzer.get_related_tables(table_name)
+⋮----
+# Include context for related tables (abbreviated)
+⋮----
+for table_name in related_tables[:3]:  # Limit to 3 related tables
+⋮----
+key_columns = [c for c in table.columns if c.is_primary_key or c.is_foreign_key]
+col_summary = ", ".join([f"{c.name}({c.data_type})" for c in key_columns[:3]])
+⋮----
+def _get_general_schema_context(self) -> str
+⋮----
+"""Get general schema context when no specific tables are mentioned"""
+⋮----
+# Use the schema's built-in context method with optimization
+⋮----
+"""Enhanced warning generation with performance and optimization hints"""
+⋮----
+# Safety warnings
+⋮----
+# Complexity warnings
+⋮----
+# JOIN warnings
+⋮----
+join_count = len(intent.tables_mentioned)
+⋮----
+# Query pattern warnings
+sql_upper = sql_query.upper()
+⋮----
+if sql_upper.count('SELECT') > 1:  # Subqueries detected
+⋮----
+# Table size warnings (if we have row count data)
+large_tables = []
+⋮----
+def suggest_query_improvements(self, sql_query: str, intent: QueryIntent) -> List[str]
+⋮----
+"""Suggest improvements for the generated query"""
+⋮----
+suggestions = []
+⋮----
+# Index suggestions
+⋮----
+# Query optimization suggestions
+⋮----
+# Alternative approaches
+⋮----
+def generate_query_alternatives(self, natural_query: str, intent: QueryIntent) -> List[str]
+⋮----
+"""Generate alternative ways to write the same query"""
+⋮----
+alternatives = []
+⋮----
+# If it's a simple SELECT, suggest variations
+⋮----
+table_name = intent.tables_mentioned[0]
+⋮----
+# Suggest different column selections
+⋮----
+# Suggest with conditions
+⋮----
+# Suggest with ordering
+⋮----
+# If it involves JOINs, suggest different JOIN types
+⋮----
+"""Enhanced query explanation with performance insights"""
+⋮----
+# Enhanced explanation prompt
+explanation_prompt = f"""Explain this SQL query in simple, business-friendly terms:
+⋮----
+# Fallback explanation
+⋮----
+def _generate_fallback_explanation(self, sql_query: str, natural_query: str) -> str
+⋮----
+"""Generate a basic explanation when AI explanation fails"""
+⋮----
+explanation_parts = [f"This query responds to: '{natural_query}'"]
+⋮----
+# Determine operation type
+⋮----
+# Identify tables
+tables_in_query = []
+⋮----
+# Identify JOINs
+⋮----
+# Identify aggregations
+</file>
+
+<file path="query_engine/query_validator.py">
+class QueryValidator
+⋮----
+def __init__(self, schema: DatabaseSchema)
+⋮----
+def validate_query(self, sql_query: str) -> Dict[str, Any]
+⋮----
+"""Comprehensive query validation"""
+⋮----
+validation_result = {
+⋮----
+# 1. Syntax validation
+syntax_result = self._validate_syntax(sql_query)
+⋮----
+# 2. Safety validation
+⋮----
+# 3. Table validation
+table_validation = validate_table_names(sql_query, self.schema.get_table_names())
+⋮----
+# 4. Complexity analysis
+complexity_analysis = estimate_query_complexity(sql_query)
+⋮----
+# 5. Overall validity
+⋮----
+def _validate_syntax(self, sql_query: str) -> Dict[str, Any]
+⋮----
+"""Validate SQL syntax"""
+⋮----
+parsed = sqlparse.parse(sql_query)
+⋮----
+# Check for basic SQL structure
+</file>
+
+<file path="ui/__init__.py">
+__all__ = ['UIComponents']
+</file>
+
+<file path="ui/components.py">
+# ui/components.py - Complete rewrite for Phase 3
+⋮----
+class UIComponents
+⋮----
+@staticmethod
+    def render_header()
+⋮----
+"""Render the main application header"""
+⋮----
+@staticmethod
+    def render_sidebar_navigation()
+⋮----
+"""Render sidebar navigation menu"""
+⋮----
+# Quick stats about current session
+⋮----
+query_count = len(st.session_state.query_history)
+successful_queries = len([q for q in st.session_state.query_history if q.get('success', False)])
+⋮----
+# Quick actions
+⋮----
+@staticmethod
+    def render_connection_manager()
+⋮----
+"""Enhanced database connection manager"""
+⋮----
+# Show active connections
+connections = st.session_state.db_manager.list_connections()
+active_connection = st.session_state.db_manager.active_connection
+⋮----
+is_active = conn == active_connection
+status = "🟢" if is_active else "⚪"
+⋮----
+# Connection form in expander
+⋮----
+@staticmethod
+    def render_connection_form()
+⋮----
+"""Database connection form"""
+⋮----
+conn_name = st.text_input("Connection Name", placeholder="My Database")
+db_type = st.selectbox("Database Type", ["SQLite", "MySQL", "PostgreSQL"])
+⋮----
+db_file = st.text_input("Database File", placeholder="path/to/database.db")
+⋮----
+conn_string = f"sqlite:///{db_file}" if db_file else ""
+⋮----
+host = st.text_input("Host", value="localhost")
+user = st.text_input("Username")
+⋮----
+port = st.number_input("Port", value=3306)
+password = st.text_input("Password", type="password")
+⋮----
+database = st.text_input("Database Name")
+conn_string = f"mysql+pymysql://{user}:{password}@{host}:{port}/{database}" if all([user, password, database]) else ""
+⋮----
+else:  # PostgreSQL
+⋮----
+port = st.number_input("Port", value=5432)
+⋮----
+conn_string = f"postgresql+psycopg2://{user}:{password}@{host}:{port}/{database}" if all([user, password, database]) else ""
+⋮----
+# Test and add connection
+⋮----
+config = ConnectionConfig(
+⋮----
+success = st.session_state.db_manager.add_connection(config)
+⋮----
+@staticmethod
+    def render_schema_explorer()
+⋮----
+"""Enhanced schema explorer with search and relationships"""
+⋮----
+analyzer = st.session_state.schema_analyzer
+schema = st.session_state.schema
+⋮----
+# Search functionality
+⋮----
+search_term = st.text_input(
+⋮----
+search_type = st.selectbox("Search in:", ["All", "Tables", "Columns"])
+⋮----
+@staticmethod
+    def render_search_results(analyzer, search_term, search_type)
+⋮----
+"""Render schema search results"""
+⋮----
+results = analyzer.search_schema(search_term)
+⋮----
+# Group columns by table
+columns_by_table = {}
+⋮----
+table = col['table']
+⋮----
+# Show suggestions if no results
+⋮----
+@staticmethod
+    def render_schema_overview(analyzer, schema)
+⋮----
+"""Render complete schema overview"""
+⋮----
+# Overview metrics
+⋮----
+total_columns = sum(len(table.columns) for table in schema.tables)
+⋮----
+total_rows = sum(table.row_count or 0 for table in schema.tables)
+⋮----
+fk_count = sum(len(table.get_foreign_keys()) for table in schema.tables)
+⋮----
+# Table details
+⋮----
+@staticmethod
+    def render_table_details(analyzer, table_name)
+⋮----
+"""Render detailed table information"""
+⋮----
+table = schema.get_table(table_name)
+⋮----
+# Table info
+⋮----
+pk_columns = [c.name for c in table.get_primary_keys()]
+⋮----
+fk_columns = table.get_foreign_keys()
+⋮----
+# Columns table
+columns_data = []
+⋮----
+flags = []
+⋮----
+df = pd.DataFrame(columns_data)
+⋮----
+# Sample data
+⋮----
+sample_df = analyzer.get_sample_data(table_name, limit=5)
+⋮----
+# Related tables
+related_tables = analyzer.get_related_tables(table_name)
+⋮----
+@staticmethod
+    def render_query_results_visualization()
+⋮----
+"""Enhanced results visualization with charts"""
+⋮----
+results = st.session_state.query_results
+df = results['data']
+⋮----
+# Results header
+⋮----
+# Display options
+⋮----
+@staticmethod
+    def render_data_table(df)
+⋮----
+"""Enhanced data table with filtering and pagination"""
+⋮----
+# Table controls
+⋮----
+# Column filter
+all_columns = list(df.columns)
+selected_columns = st.multiselect(
+⋮----
+default=all_columns[:10]  # Show first 10 columns by default
+⋮----
+# Row limit
+row_limit = st.selectbox("Rows to display:", [25, 50, 100, 500, "All"])
+⋮----
+# Search
+search_value = st.text_input("Search in data:", placeholder="Search...")
+⋮----
+# Apply filters
+display_df = df[selected_columns] if selected_columns else df
+⋮----
+# Simple text search across all columns
+mask = display_df.astype(str).apply(
+display_df = display_df[mask]
+⋮----
+display_df = display_df.head(int(row_limit))
+⋮----
+# Display table
+⋮----
+# Table statistics
+⋮----
+@staticmethod
+    def render_auto_charts(df)
+⋮----
+"""Automatically generate charts based on data types"""
+⋮----
+numeric_columns = df.select_dtypes(include=['number']).columns.tolist()
+categorical_columns = df.select_dtypes(include=['object', 'category']).columns.tolist()
+⋮----
+# Bar chart for categorical data
+if categorical_columns and len(df) <= 1000:  # Limit for performance
+cat_column = st.selectbox("Categorical column for bar chart:", categorical_columns)
+⋮----
+value_counts = df[cat_column].value_counts().head(20)  # Top 20 values
+⋮----
+fig = px.bar(
+⋮----
+# Histogram for numeric data
+⋮----
+num_column = st.selectbox("Numeric column for histogram:", numeric_columns)
+⋮----
+fig = px.histogram(
+⋮----
+# Additional charts if we have both numeric and categorical
+⋮----
+# Scatter plot
+⋮----
+x_col = st.selectbox("X-axis:", numeric_columns, key="scatter_x")
+y_col = st.selectbox("Y-axis:", [col for col in numeric_columns if col != x_col], key="scatter_y")
+color_col = st.selectbox("Color by:", ["None"] + categorical_columns, key="scatter_color")
+⋮----
+fig = px.scatter(
+⋮----
+# Box plot
+⋮----
+cat_col = st.selectbox("Category:", categorical_columns, key="box_cat")
+num_col = st.selectbox("Numeric:", numeric_columns, key="box_num")
+⋮----
+fig = px.box(
+⋮----
+@staticmethod
+    def render_export_options(df, results)
+⋮----
+"""Export options for query results"""
+⋮----
+# Export formats
+⋮----
+# CSV Export
+csv_data = df.to_csv(index=False)
+⋮----
+# JSON Export
+json_data = df.to_json(orient='records', indent=2)
+⋮----
+# SQL Export (with the query that generated this data)
+sql_export = f"""-- Query executed on: {results['timestamp']}
+⋮----
+# Export summary
+</file>
+
+<file path="utils/__init__.py">
+__all__ = [
+</file>
+
+<file path="utils/helpers.py">
+def format_sql(query: str) -> str
+⋮----
+"""Format SQL query for better readability"""
+⋮----
+def truncate_text(text: str, max_length: int = 100) -> str
+⋮----
+"""Truncate text with ellipsis if too long"""
+⋮----
+def safe_execute(func, default_value=None, *args, **kwargs)
+⋮----
+"""Safely execute a function with error handling"""
+⋮----
+def is_read_only_query(query: str) -> bool
+⋮----
+"""Check if query is read-only (SELECT only)"""
+query_clean = re.sub(r'--.*$', '', query, flags=re.MULTILINE)
+query_clean = re.sub(r'/\*.*?\*/', '', query_clean, flags=re.DOTALL)
+query_clean = query_clean.strip().upper()
+⋮----
+dangerous_keywords = ['INSERT', 'UPDATE', 'DELETE', 'DROP', 'CREATE', 'ALTER', 'TRUNCATE', 'REPLACE']
+⋮----
+def extract_table_names(query: str) -> List[str]
+⋮----
+"""Extract table names from SQL query"""
+⋮----
+parsed = sqlparse.parse(query)[0]
+tables = []
+⋮----
+def extract_from_token(token)
+⋮----
+def estimate_query_complexity(query: str) -> Dict[str, Any]
+⋮----
+"""Estimate query complexity for performance warnings"""
+complexity = {
+⋮----
+query_upper = query.upper()
+⋮----
+# Count JOINs
+join_count = query_upper.count('JOIN')
+⋮----
+# Count subqueries
+subquery_count = query_upper.count('SELECT') - 1  # Subtract main SELECT
+⋮----
+# Check for aggregations
+agg_functions = ['COUNT', 'SUM', 'AVG', 'MIN', 'MAX', 'GROUP BY']
+⋮----
+# Generate warnings
+⋮----
+def validate_table_names(query: str, available_tables: List[str]) -> Dict[str, Any]
+⋮----
+"""Validate that table names in query exist in schema"""
+extracted_tables = extract_table_names(query)
+available_lower = [t.lower() for t in available_tables]
+⋮----
+validation = {
+⋮----
+# Simple similarity matching for suggestions
+suggestions = [t for t in available_tables if table.lower() in t.lower()]
+⋮----
+def extract_from_token(token)
+⋮----
+"""Extract table names from SQL tokens"""
+⋮----
+agg_count = sum(1 for func in agg_functions if func in query_upper)
+</file>
+
+<file path=".gitignore">
+# Environment
+.env
+.venv/
+venv/
+env/
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+*.so
+.pytest_cache/
+
+# Database
+*.db
+*.sqlite
+*.sqlite3
+connection_cache/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+logs/
+
+# Streamlit
+.streamlit/
+</file>
+
+<file path="app.py">
+def main()
+⋮----
+"""Main application entry point"""
+⋮----
+# Enhanced page configuration
+⋮----
+# Custom CSS for professional styling
+⋮----
+# Check API configuration
+⋮----
+# Initialize session state
+⋮----
+# Header with navigation
+⋮----
+# Sidebar for database connections and navigation
+⋮----
+# Main content area with tabs
+⋮----
+def render_main_application()
+⋮----
+"""Render the main application interface"""
+⋮----
+# Initialize schema analyzer
+engine = st.session_state.db_manager.get_active_engine()
+⋮----
+# Create main tabs
+⋮----
+def render_query_builder()
+⋮----
+"""Enhanced query builder interface"""
+⋮----
+# Create two columns for input and preview
+⋮----
+# Enhanced query input with suggestions
+query_placeholder = st.selectbox(
+⋮----
+query_placeholder = ""
+⋮----
+natural_query = st.text_area(
+⋮----
+# Query analysis and generation
+⋮----
+# Initialize NL processor
+processor = NLProcessor(st.session_state.schema, st.session_state.schema_analyzer)
+result = processor.process_query(natural_query)
+⋮----
+# Store result in session state
+⋮----
+result = st.session_state.current_result
+⋮----
+# Display metrics
+⋮----
+confidence_color = "green" if result.intent.confidence > 0.8 else "orange" if result.intent.confidence > 0.6 else "red"
+⋮----
+complexity_color = "green" if result.intent.complexity_score < 5 else "orange" if result.intent.complexity_score < 8 else "red"
+⋮----
+# Query details
+⋮----
+# Safety status
+⋮----
+# Generated SQL display and execution
+⋮----
+# SQL Query section
+⋮----
+# Format and display SQL
+formatted_sql = format_sql(result.sql_query)
+⋮----
+# Show explanation
+⋮----
+# Execute button
+⋮----
+# Save to favorites
+⋮----
+# Copy to clipboard
+⋮----
+st.write("SQL copied to clipboard!")  # Note: actual clipboard requires additional setup
+⋮----
+# Download query
+⋮----
+# Warnings and suggestions
+⋮----
+# Optimization suggestions
+⋮----
+def execute_query(sql_query: str, natural_query: str)
+⋮----
+"""Execute SQL query and display results"""
+⋮----
+# Execute query using database manager
+df = st.session_state.db_manager.execute_query(sql_query)
+⋮----
+# Store results in session state
+⋮----
+# Add to query history
+⋮----
+# Auto-switch to results tab (would require JavaScript in real implementation)
+⋮----
+# Add failed query to history
+⋮----
+def save_to_favorites(natural_query: str, sql_query: str)
+⋮----
+"""Save query to favorites"""
+⋮----
+favorite = {
+⋮----
+def render_welcome_screen()
+⋮----
+"""Welcome screen when no database is connected"""
+⋮----
+# Create and connect to sample database
+⋮----
+config = ConnectionConfig(
+⋮----
+success = st.session_state.db_manager.add_connection(config)
+</file>
+
+<file path="config.py">
+# API Configuration - Keep OpenAI for compatibility, add Gemini
+OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
+OPENAI_API_BASE = os.getenv("OPENAI_API_BASE", "https://api.openai.com/v1")
+⋮----
+# Google Gemini Configuration
+GOOGLE_API_KEY = os.getenv("GOOGLE_API_KEY")
+GEMINI_MODEL = "gemini-1.5-flash"  # Fast and free model
+⋮----
+# LLM Configuration - Update to use Gemini
+LLM_PROVIDER = "gemini"  # Can be "openai" or "gemini"
+LLM_MODEL = GEMINI_MODEL if LLM_PROVIDER == "gemini" else "gpt-4"
+LLM_TEMPERATURE = 0.1
+MAX_SCHEMA_TOKENS = 3000
+⋮----
+# Database Configuration
+SUPPORTED_DB_TYPES = ["sqlite", "mysql", "postgresql"]
+MAX_QUERY_EXECUTION_TIME = 30  # seconds
+MAX_RESULT_ROWS = 10000
+DATABASE_ENCRYPTION_KEY = os.getenv("DATABASE_ENCRYPTION_KEY")
+⋮----
+# UI Configuration
+STREAMLIT_CONFIG = {
+⋮----
+# Query Configuration
+QUERY_HISTORY_LIMIT = 50
+ENABLE_WRITE_OPERATIONS = False  # Safety first
+DEFAULT_ROW_LIMIT = 100
+</file>
+
+<file path="generate_key.py">
+# Generate a proper Fernet encryption key
+key = Fernet.generate_key()
+</file>
+
+<file path="main.py">
+#!/usr/bin/env python3
+"""
+SQL Query Builder - Command Line Interface
+"""
+⋮----
+def main()
+⋮----
+# Check API key
+⋮----
+# Initialize database manager
+db_manager = DatabaseManager()
+⋮----
+# Create sample database for testing
+⋮----
+# Add sample connection
+config = ConnectionConfig(
+⋮----
+# Analyze schema
+engine = db_manager.get_active_engine()
+analyzer = SchemaAnalyzer(engine)
+schema = analyzer.analyze_database()
+⋮----
+for col in table.columns[:3]:  # Show first 3 columns
+flags = []
+⋮----
+flag_str = f" ({', '.join(flags)})" if flags else ""
+</file>
+
+<file path="requirements.txt">
+streamlit==1.46.0
+sqlalchemy==2.0.41
+pandas==2.3.0
+python-dotenv==1.1.0
+openai==1.90.0
+pymysql==1.1.0
+psycopg2-binary==2.9.10
+sqlparse==0.5.0
+sqlglot==25.0.0
+plotly==5.24.1
+streamlit-aggrid==1.0.5
+streamlit-ace==0.1.1
+cryptography>=41.0.0
+google-generativeai>=0.3.0
+</file>
+
+<file path="test_imports.py">
+
+</file>
+
+<file path="test_nl_processor.py">
+def test_nl_processor_enhanced()
+⋮----
+"""Enhanced test with Phase 2.2 features"""
+⋮----
+# Setup
+db_manager = DatabaseManager()
+⋮----
+config = ConnectionConfig(
+⋮----
+# Enhanced setup with schema analyzer
+engine = db_manager.get_active_engine()
+analyzer = SchemaAnalyzer(engine)
+schema = analyzer.analyze_database()
+⋮----
+# Create enhanced NL processor
+processor = NLProcessor(schema, schema_analyzer=analyzer)
+⋮----
+# Test queries with enhanced analysis
+test_queries = [
+⋮----
+"Show customers who haven't placed any orders"  # New complex query
+⋮----
+result = processor.process_query(query)
+</file>
+
+<file path="test_phase_2_1.py">
+# test_phase_2_1.py
+⋮----
+def test_nl_processor_comprehensive()
+⋮----
+"""Comprehensive test of our Phase 2.1 NLP engine"""
+⋮----
+# Setup - like initializing your app stack
+db_manager = DatabaseManager()
+⋮----
+# Create sample database - like seeding test data
+⋮----
+# Add connection - like configuring database connection - Fix the parameters
+config = ConnectionConfig(
+⋮----
+database_type=DatabaseType.SQLITE,  # Use DatabaseType enum
+db_type="sqlite"  # Keep this as string
+⋮----
+success = db_manager.add_connection(config)
+⋮----
+# Analyze schema - like discovering API endpoints
+engine = db_manager.get_active_engine()
+analyzer = SchemaAnalyzer(engine)
+schema = analyzer.analyze_database()
+⋮----
+# Create NL processor - like initializing your smart API handler
+processor = NLProcessor(schema)
+⋮----
+# Test different query types - like testing various API endpoints
+test_cases = [
+⋮----
+# Process query - like making API request
+result = processor.process_query(test_case['query'])
+⋮----
+# Display results
+⋮----
+# Success indicator
+status = "✅ PASS" if result.is_safe and result.sql_query else "❌ FAIL"
+</file>
+
+<file path="test_phase_2_2.py">
+# test_phase_2_2.py
+⋮----
+def test_phase_2_2_comprehensive()
+⋮----
+"""Test Phase 2.2: Schema Context Integration"""
+⋮----
+# Setup
+db_manager = DatabaseManager()
+⋮----
+config = ConnectionConfig(
+success = db_manager.add_connection(config)
+⋮----
+# Enhanced setup
+engine = db_manager.get_active_engine()
+analyzer = SchemaAnalyzer(engine)
+schema = analyzer.analyze_database()
+⋮----
+# Add analyzer to processor for enhanced features
+processor = NLProcessor(schema)
+processor.schema_analyzer = analyzer  # Enable advanced features
+⋮----
+# Advanced test cases
+advanced_test_cases = [
+⋮----
+result = processor.process_query(test_case['query'])
+⋮----
+# Enhanced analysis
+⋮----
+# Test new Phase 2.2 features
+suggestions = processor.suggest_query_improvements(result.sql_query, result.intent)
+⋮----
+for suggestion in suggestions[:2]:  # Show top 2
+⋮----
+alternatives = processor.generate_query_alternatives(test_case['query'], result.intent)
+⋮----
+for alt in alternatives[:1]:  # Show 1 alternative
+⋮----
+# Feature verification
+⋮----
+sql_upper = result.sql_query.upper()
+⋮----
+feature_upper = feature.upper()
+found = any(key in sql_upper for key in feature_upper.split())
+status = "✅" if found else "⚪"
+⋮----
+# Test schema context optimization
+⋮----
+# Test token limit management
+context_3000 = analyzer.get_schema_context_optimized(max_tokens=3000)
+context_1000 = analyzer.get_schema_context_optimized(max_tokens=1000)
+⋮----
+# Test schema search
+search_results = analyzer.search_schema("customer")
+</file>
+
+</files>
